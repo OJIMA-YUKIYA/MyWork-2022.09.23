@@ -1,0 +1,57 @@
+## NX で THETA のmomo 配信するためのインストール手順
+## MyWork-2022.09.23.zip をホームディレクトリ下に解凍
+
+------------------------------------------
+
+## Video for Linux tools のインストール
+sudo apt-get install v4l-utils
+
+## Linux で仮想カメラを作成するためのツール
+sudo apt install v4l2loopback-utils
+sudo modprobe v4l2loopback
+
+## Linux の起動時に v4l2loopback を立ち上げるためのスクリプト
+## これを行うと，毎回 sudo modprobe v4l2loopback を叩かなくて済む．
+## 参考リンク https://sites.google.com/site/jetsontricks/xavier1
+sudo sh -c 'echo options v4l2loopback devices=2 video_nr=0,1 card_label=\"VCam01,VCam02\" exclusive_caps=1,1 > /etc/modprobe.d/v4l2loopback.conf'
+sudo sh -c 'echo v4l2loopback > /etc/modules'
+
+---------------------------
+
+## libuvc-theta のインストール
+## 参考リンク https://codetricity.github.io/theta-linux/
+
+sudo apt install libjpeg-dev
+cd ~/MyWork-2022.09.23/libuvc-theta
+mkdir build
+cd build
+cmake ..
+make
+sudo make install
+
+-------------------------------------------------------
+
+## gst_loopback のコンパイル，実行
+
+cd  ~/MyWork-2022.09.23/libuvc-theta-sample/gst
+make
+
+## 実行スクリプト
+./gst_loopback
+
+## もし，「libuvc.so が見つかりません」というエラーが発生したら，~/.bashrc に以下を追記
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+
+-----------------------------------
+
+
+## 実行
+
+## ターミナル１で以下を実行し，仮想カメラ /dev/video0 を作成
+~/MyWork-2022.09.23/libuvc-theta-sample/gst/gst_loopback
+
+## 新しくターミナル2を立ち上げ，momo を実行
+cd ~/MyWork-2022.09.23/momo-2021.2.3_ubuntu-18.04_armv8_jetson_xavier
+./momo --hw-mjpeg-decoder=false --resolution 4K --video-device /dev/video0 test --document-root html
+
+## PC のブラウザで，http://(NXのIPアドレス):8080 にアクセスして，"Connect" ボタンをクリック．
